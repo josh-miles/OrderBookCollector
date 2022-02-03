@@ -1,0 +1,69 @@
+import binance
+from binance import Client
+#from binance import client
+import pandas as pd
+import sqlalchemy
+from binance import BinanceSocketManager
+KEY = '0tJJIRRFbLxVTjbzhxNXQ2U7JXxlfMDAbdUI1aTDVOv8IKEOAr8djr4UO3jPm790'
+SCRT= 'gwi9WMuz32elqvMP341FPDF1jkrKveXNQVEosiRBXG4OPsZLzAXgaLvBdUx1em8o'
+import websocket
+import talib as ta
+client = binance.Client(KEY, SCRT)
+bsm = BinanceSocketManager(client)
+socket = bsm.trade_socket('BTCUSDT')
+import matplotlib.pyplot as plt
+import plotly
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import requests
+import time
+import csv  
+import json
+import ast
+
+#retrieve, format, store ob data for a list of symbols (USDT)
+def OrderBookRecorder():
+    def TimeFunc():
+        def SymbolFunc(symbol):
+            #RETRIEVE
+            book = client.get_order_book(symbol=f'{symbol}USDT')
+    
+            #FORMAT NEW DATA
+            index = book['lastUpdateId']
+            bids  = book['bids']
+            asks  = book['asks']
+            array = [index,bids,asks] #, columns=['time', 'bids', 'asks']
+    
+            #STORE NEW DATA IN OLD FOLDER
+            filename = f"orderbookrecord{symbol}.csv"
+            with open(filename,mode='a') as f:
+                writer=csv.writer(f)
+                writer.writerow(array)
+
+        #ITERATING SYMBOLS
+        symbols = ['ICX','ONE','FTM', 'REP', 'MATIC', 'BTC', 'ETH', 'MANA', 'AMP', 'ANKR', 'AAVE']
+        for s in symbols:
+            SymbolFunc(s)
+    
+    #UPDATING EVERY 60 SECONDS
+    count=0
+    t = []
+    t.append(time.time())
+    while count<376: 
+        try:
+            TimeFunc()
+        except:
+            print('trying again...')
+            client = binance.Client(KEY, SCRT)
+            TimeFunc()
+            
+        count+=1
+        t.append(time.time())
+        tdelay = (t[-1]-t[-2])-60
+        if tdelay>=60:
+            tdelay=60
+        time.sleep(60-tdelay)
+        print('cycled',count)
+        
+OrderBookRecorder()
